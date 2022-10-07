@@ -3,7 +3,7 @@ using static Console;
 
 public class Menu
 {
-    private const string ChessTitle = @"
+    public static string ChessTitle = @"
     _______  __   __  _______  _______  _______ 
     |       ||  | |  ||       ||       ||       |
     |       ||  |_|  ||    ___||  _____||  _____|
@@ -13,148 +13,64 @@ public class Menu
         ____| |
     |_______||__| |__||_______||_______||_______|
     ";
+    
+    private int _selectedIndex;
+    private readonly string[] _options;
+    private readonly string _title;
 
-     private int SelectedIndex;
-     
-     private const string ShortcutExit = "X";
-     private const string ShortcutGoBack = "B";
-     private const string ShortcutGoToMain = "M";
-     public string Title { get; set; }
-     private readonly EMenuLevel _level;
-
-     public Dictionary<string, MenuItem> MenuItems = new Dictionary<string, MenuItem>();
-
-     private readonly MenuItem _menuItemExit = new MenuItem(ShortcutExit, "Exit", null);
-     private readonly MenuItem _menuItemGoBack = new MenuItem(ShortcutGoBack, "Back", null);
-     private readonly MenuItem _menuItemGoToMain = new MenuItem(ShortcutGoToMain, "Main menu", null);
-
-    public Menu(EMenuLevel level, string title, List<MenuItem> menuItems)
+    public Menu(string title, string[] options)
     {
-        _level = level;
-        Title = title;
-        SelectedIndex = 0;
-        foreach (var menuItem in menuItems)
-        {
-            MenuItems.Add(menuItem.Shortcut, menuItem);
-        }
-
-        if (_level != EMenuLevel.Main)
-            MenuItems.Add(ShortcutGoBack, _menuItemGoBack);
-
-        if (_level == EMenuLevel.Other)
-            MenuItems.Add(ShortcutGoToMain, _menuItemGoToMain);
-
-        MenuItems.Add(ShortcutExit, _menuItemExit);
+        _title = title;
+        _options = options;
+        _selectedIndex = 0;
     }
 
-    public void DisplayOptions()
+    public void DisplayMenu()
     {
-        Clear();
         WriteLine(ChessTitle);
-        WriteLine(Title);
-        for (var i = 0; i < MenuItems.Count; i++)
+        WriteLine(_title);
+        for (var i = 0; i < _options.Length; i++)
         {
-            var option = MenuItems.ElementAt(i).Value;
-            string prefix;
-
-            if (i == SelectedIndex)
-            {
-                prefix = "*";
-                ForegroundColor = ConsoleColor.Black;
-                BackgroundColor = ConsoleColor.White;
-            }
-            else
-            {
-                prefix = " ";
-                ForegroundColor = ConsoleColor.White;
-                BackgroundColor = ConsoleColor.Black;
-            }
-            WriteLine($"{prefix} << {option} >>");
+            var currentOption = _options[i];
+            ForegroundColor = i == _selectedIndex ? ConsoleColor.Yellow : ConsoleColor.White;
+            
+            WriteLine(currentOption);
         }
         ResetColor();
     }
 
     public int Run()
     {
-        Clear();
         ConsoleKey keyPressed;
         do
         {
-            DisplayOptions();
-            var keyInfo = ReadKey(true);
+            Clear();
+            DisplayMenu();
+            
+            ConsoleKeyInfo keyInfo = ReadKey(true);
             keyPressed = keyInfo.Key;
-
+            
+            //update SelectedIndex based on arrow keys.
             if (keyPressed == ConsoleKey.UpArrow)
             {
-                SelectedIndex--;
-                if (SelectedIndex == -1)
+                _selectedIndex--;
+                if (_selectedIndex == -1)
                 {
-                    SelectedIndex = MenuItems.Count - 1;
+                    _selectedIndex = _options.Length - 1;
                 }
             } 
             else if (keyPressed == ConsoleKey.DownArrow)
             {
-                SelectedIndex++;
-                if (SelectedIndex == MenuItems.Count)
+                _selectedIndex++;
+                if (_selectedIndex == _options.Length)
                 {
-                    SelectedIndex = 0;
+                    _selectedIndex = 0;
                 }
             }
-            
+
         } while (keyPressed != ConsoleKey.Enter);
-        return SelectedIndex;
+
+        return _selectedIndex;
     }
-
-    /*public string RunMenu()
-    {
-        var menuDone = false;
-        var userChoice = "";
-        do
-        {
-            /*Console.WriteLine(Title);
-            Console.WriteLine("===================");#1#
-            DisplayOptions();
-            /*foreach (var menuItem in _menuItems.Values)
-            {
-                Console.WriteLine(menuItem);
-            }#1#
-            Console.WriteLine("-------------------");
-            Console.Write("Your choice:");
-            userChoice = Console.ReadLine()?.ToUpper().Trim() ?? "";
-
-            if (MenuItems.ContainsKey(userChoice))
-            {
-                string? runReturnValue = null;
-                if (MenuItems[userChoice].MethodToRun != null)
-                {
-                   runReturnValue = MenuItems[userChoice].MethodToRun!();
-                }
-
-                if (userChoice == ShortcutGoBack)
-                {
-                    menuDone = true;
-                }
-
-                if (runReturnValue == ShortcutExit || userChoice == ShortcutExit)
-                {
-                    userChoice = runReturnValue ?? userChoice;
-                    menuDone = true;
-                }
-                
-                if ((userChoice == ShortcutGoToMain || runReturnValue == ShortcutGoToMain) && _level != EMenuLevel.Main)
-                {
-                    userChoice = runReturnValue ?? userChoice;
-                    menuDone = true;
-                }
-
-            }
-            else
-            {
-                Console.WriteLine("Wrong input");
-                Console.WriteLine();
-            }
-        } while (menuDone == false);
-
-        return userChoice;
-    }*/
 }
+
