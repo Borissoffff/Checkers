@@ -13,70 +13,53 @@ public static class Ui
         var numberList = Enumerable.Range(1, rows).Select(c => c).ToList();
         numberList.Reverse();
         
-        //var charList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToList().Take(cols).ToList();
         var charList = GetCharList().Take(cols).ToList();
 
         var checker = "O";
         var empty = " ";
         
         Clear();
+        BackgroundColor = ConsoleColor.Black;
+ 
+        Write("   " + string.Concat(Enumerable.Repeat("-----", rows)) + "--");
+        WriteLine();
         for (int i = 0; i < rows; i++) {
-            Write("   ");
-            for (int j = 0; j < cols; j++)
-            {
-                BackgroundColor = ConsoleColor.Black;
-                Write("+-----");
-            }
-            WriteLine("+");
-
+            
             for (int j = 0; j < cols; j++)
             {
                 if (j == 0)
                 {
-                    Write(numberList[i] > 9 ? $"{numberList[i]} " : $" {numberList[i]} ");
+                    Write(numberList[i] > 9 ? $"{numberList[i]} |" : $" {numberList[i]} |");
                 }
-                BackgroundColor = ConsoleColor.Black;
-                Write("|");
-                string pieceStr;
+
+                string pieceStr = "";
                 switch (board[i, j])
                 {
                     case EBoardPiece.BlackSquare:
-                        BackgroundColor = ConsoleColor.Black;
                         pieceStr = empty;
                         break;
                     case EBoardPiece.BlackSquareRedChecker:
-                        BackgroundColor = ConsoleColor.Black;
                         ForegroundColor = ConsoleColor.Red;
                         pieceStr = checker;
                         break;
                     case EBoardPiece.BlackSquareWhiteChecker:
-                        BackgroundColor = ConsoleColor.Black;
-                        ForegroundColor = ConsoleColor.White;
                         pieceStr = checker;
                         break;
-                    default:
-                        BackgroundColor = ConsoleColor.White;
+                    case EBoardPiece.WhiteSquare:
                         pieceStr = empty;
+                        BackgroundColor = ConsoleColor.White;
                         break;
                 }
-                Write("  ");
-                Write(pieceStr);
-                Write("  ");
-                ForegroundColor = ConsoleColor.Black;
-
+                Write($"  {pieceStr}  ");
+                ResetColor();
+                
             }
-
-            BackgroundColor = ConsoleColor.Black;
             WriteLine("|");
         }
+        Write("   " + string.Concat(Enumerable.Repeat("-----", rows)) + "--");
+        WriteLine();
         Write("   ");
-        for (int i = 0; i < cols; i++)
-        {
-            Write("+-----");
-        }
-        WriteLine("+");
-        Write("   ");
-        charList.ForEach(p => Write($"   {p}  "));
+        charList.ForEach(p => Write($"   {p} "));
     }
 
     private static List<string> GetCharList()

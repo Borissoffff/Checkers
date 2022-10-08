@@ -7,16 +7,6 @@ public class CheckersBrain
     private readonly EBoardPiece[,] _board;
     public CheckersBrain(int boardWidth, int boardHeight)
     {
-        if (boardHeight < 4 || boardWidth < 4)
-        {
-            throw new Exception("Board is too small");
-        }
-
-        if (boardHeight % 2 != 0 || boardWidth % 2 != 0)
-        {
-            throw new Exception("Board should be contain even amount of rows and columns");
-        }
-        
         _board = new EBoardPiece[boardWidth, boardHeight];
 
         var count = 0;
