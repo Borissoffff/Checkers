@@ -3,15 +3,13 @@ using static Console;
 
 public class Menu
 {
-    public static string ChessTitle = @"
-    _______  __   __  _______  _______  _______ 
-    |       ||  | |  ||       ||       ||       |
-    |       ||  |_|  ||    ___||  _____||  _____|
-    |       ||       ||   |___ | |_____ | |_____ 
-    |      _||       ||    ___||_____  ||_____  |
-    |     |_ |   _   ||   |___  _____| | _
-        ____| |
-    |_______||__| |__||_______||_______||_______|
+    public static string CheckersTitle = @"
+   _____ _               _                 
+  / ____| |             | |                
+ | |    | |__   ___  ___| | _____ _ __ ___ 
+ | |    | '_ \ / _ \/ __| |/ / _ \ '__/ __|
+ | |____| | | |  __/ (__|   <  __/ |  \__ \
+  \_____|_| |_|\___|\___|_|\_\___|_|  |___/
     ";
     
     private int _selectedIndex;
@@ -27,8 +25,10 @@ public class Menu
 
     public void DisplayMenu()
     {
-        WriteLine(ChessTitle);
+        WriteLine(CheckersTitle);
+        ForegroundColor = ConsoleColor.Blue;
         WriteLine(_title);
+        ResetColor();
         for (var i = 0; i < _options.Length; i++)
         {
             var currentOption = _options[i];
@@ -39,12 +39,13 @@ public class Menu
         ResetColor();
     }
 
-    public int Run()
+    public int Run(Action? addInfo = null)
     {
         ConsoleKey keyPressed;
         do
         {
             Clear();
+            addInfo?.Invoke();
             DisplayMenu();
             
             ConsoleKeyInfo keyInfo = ReadKey(true);
@@ -72,5 +73,9 @@ public class Menu
 
         return _selectedIndex;
     }
+
+
+    public void ClearCheckersTitle() => CheckersTitle = "";
+    
 }
 

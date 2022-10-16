@@ -5,10 +5,10 @@ namespace ConsoleUI;
 
 public static class Ui
 {
-    public static void DrawGameBoard(EBoardPiece[,] board)
+    public static void DrawGameBoard(EBoardPiece?[][] board)
     {
         var cols = board.GetLength(0);
-        var rows = board.GetLength(1);
+        var rows = board[0].GetLength(0);
 
         var numberList = Enumerable.Range(1, rows).Select(c => c).ToList();
         numberList.Reverse();
@@ -33,7 +33,7 @@ public static class Ui
                 }
 
                 string pieceStr = "";
-                switch (board[i, j])
+                switch (board[i][j])
                 {
                     case EBoardPiece.BlackSquare:
                         pieceStr = empty;

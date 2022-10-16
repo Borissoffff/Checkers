@@ -4,11 +4,23 @@ namespace GameBrain;
 
 public class CheckersBrain
 {
-    private readonly EBoardPiece[,] _board;
-    public CheckersBrain(int boardWidth, int boardHeight)
+    //private readonly EBoardPiece[,] _board;
+    private readonly CheckersGameState _state;
+    public CheckersBrain(CheckersOption options)
     {
-        _board = new EBoardPiece[boardWidth, boardHeight];
+        
+        //_board = new EBoardPiece[boardWidth, boardHeight];
+        var boardWidth = options.Width;
+        var boardHeight = options.Height;
 
+        _state = new CheckersGameState();
+
+        _state.GameBoard = new EBoardPiece?[boardWidth][];
+        for (int i = 0; i < boardWidth; i++)
+        {
+            _state.GameBoard[i] = new EBoardPiece?[boardHeight];
+        }
+        
         var count = 0;
         
         var opponentsRows = new[] { 0, 1, 2 };
@@ -20,24 +32,24 @@ public class CheckersBrain
             {
                 if (count % 2 == 0)
                 {
-                    _board[i, j] = EBoardPiece.WhiteSquare;
+                    _state.GameBoard[i][j] = EBoardPiece.WhiteSquare;
                     count++;
                 }
                 else
                 {
                     if (opponentsRows.Contains(i))
                     {
-                        _board[i, j] = EBoardPiece.BlackSquareRedChecker;
+                        _state.GameBoard[i][j] = EBoardPiece.BlackSquareRedChecker;
                         count++;
                     }
                     else if (myRows.Contains(i))
                     {
-                        _board[i, j] = EBoardPiece.BlackSquareWhiteChecker;
+                        _state.GameBoard[i][j] = EBoardPiece.BlackSquareWhiteChecker;
                         count++;
                     }
                     else
                     {
-                        _board[i, j] = EBoardPiece.BlackSquare;
+                        _state.GameBoard[i][j] = EBoardPiece.BlackSquare;
                         count++; 
                     }
                 }
@@ -46,10 +58,9 @@ public class CheckersBrain
         }
     }
 
-    public EBoardPiece[,] GetBoard()
+    public EBoardPiece?[][] GetBoard()
     {
-        var board = new EBoardPiece[_board.GetLength(0), _board.GetLength(1)];
-        Array.Copy(_board, board, _board.Length);
-        return board;
+        var jsonStr = System.Text.Json.JsonSerializer.Serialize(_state.GameBoard);
+        return System.Text.Json.JsonSerializer.Deserialize<EBoardPiece?[][]>(jsonStr)!;
     }
 }

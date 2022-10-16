@@ -1,6 +1,10 @@
+/*using System.Xml.Linq;
 using ConsoleUI;
+using DAL;
+using DAL.FileSystem;
 using GameBrain;
 using MenuSystem;
+using ProjectDomain;
 
 namespace ConsoleAppCheckersGame;
 
@@ -8,8 +12,19 @@ using static Console;
 
 public class Game
 {
+    
+    
+    
     public void Start()
     {
+        CheckersOption gameOptions = new CheckersOption();
+        IGameOptionsRepository repo = new GameOptionsRepositoryFileSystem();
+        CheckersBrain game = new CheckersBrain(gameOptions);
+        
+        repo.SaveGameOptions("test", gameOptions);
+        repo.SaveGameOptions("test2", gameOptions);
+        
+    
         RunMainMenu();
         WriteLine();
         WriteLine("Press any key to exit ...");
@@ -26,7 +41,7 @@ public class Game
         switch (selectedIndex)
         {
             case 0:
-                ChooseBoardSizeMenu();
+                CreateNewGame();
                 break;
             case 1:
                 LoadGame();
@@ -43,7 +58,9 @@ public class Game
     private void DisplayOptions()
     {
         string title = "Options menu";
-        string[] options = { "Option 1", "Option 2", "Option 3", "Go Back" };
+        string[] options = { "Create Options", "Display Saved Options",
+                            "Load Options", "Delete Options",
+                            "Save current Options", "Edit current Options" };
         Menu optionsMenu = new Menu(title, options);
         int selectedIndex = optionsMenu.Run();
 
@@ -53,10 +70,10 @@ public class Game
                 WriteLine("Option 11111111111");
                 break;
             case 1:
-                WriteLine("Option 22222222222");
+                ListOptions();
                 break;
             case 2:
-                RunThirdMenu();
+                LoadGameOptions();
                 break;
             case 3:
                 RunMainMenu();
@@ -64,7 +81,23 @@ public class Game
         }
     }
 
-    public void ChooseBoardSizeMenu()
+    private void LoadGameOptions()
+    {
+        Console.Write("Options name:");
+        var optionsName = Console.ReadLine();
+        gameOptions = repo.GetGameOptions(optionsName);
+
+    }
+
+    private void ListOptions()
+    {
+        foreach (var fileName in repo.GetGameOptionsList())
+        {
+            WriteLine(fileName);
+        }
+    }
+
+    /*public void ChooseBoardSizeMenu()
     {
         string title = "Choose the board size you want to play.";
         string[] options = { "8x8", "10x10", "Choose your own" };
@@ -84,7 +117,7 @@ public class Game
                 CreateNewGame(size);
                 break;
         }
-    }
+    }#1#
     private void RunThirdMenu()
     {
         string title = "Third menu";
@@ -107,9 +140,9 @@ public class Game
         Environment.Exit(0);
     }
 
-    private void CreateNewGame(int boardSize)
+    private void CreateNewGame()
     {
-        var game = new CheckersBrain(boardSize, boardSize);
+        game = new CheckersBrain(gameOptions);
         Ui.DrawGameBoard(game.GetBoard());
     }
 
@@ -161,4 +194,4 @@ public class Game
 
         return res;
     }
-}
+}*/
