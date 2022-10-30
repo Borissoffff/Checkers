@@ -4,18 +4,15 @@ namespace GameBrain;
 
 public class CheckersBrain
 {
-    //private readonly EBoardPiece[,] _board;
-    private readonly CheckersGameState _state;
+    private readonly CheckersState _state;
     public CheckersBrain(CheckersOption options)
     {
-        
-        //_board = new EBoardPiece[boardWidth, boardHeight];
         var boardWidth = options.Width;
         var boardHeight = options.Height;
 
-        _state = new CheckersGameState();
-
+        _state = new CheckersState();
         _state.GameBoard = new EBoardPiece?[boardWidth][];
+        
         for (int i = 0; i < boardWidth; i++)
         {
             _state.GameBoard[i] = new EBoardPiece?[boardHeight];
@@ -62,5 +59,10 @@ public class CheckersBrain
     {
         var jsonStr = System.Text.Json.JsonSerializer.Serialize(_state.GameBoard);
         return System.Text.Json.JsonSerializer.Deserialize<EBoardPiece?[][]>(jsonStr)!;
+    }
+
+    public string GetSerializedBoard()
+    {
+        return System.Text.Json.JsonSerializer.Serialize(_state.GameBoard);
     }
 }

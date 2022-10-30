@@ -6,6 +6,8 @@ public class GamesRepositoryFileSystem : IGamesRepository
 {
     private const string JsonExtension = "json";
     private readonly string _gamesDirectory = "." + Path.DirectorySeparatorChar + "games";
+    public string Name = "FileSystem";
+
 
     public List<string> GetGamesList()
     {
@@ -51,8 +53,8 @@ public class GamesRepositoryFileSystem : IGamesRepository
             Directory.CreateDirectory(_gamesDirectory);
         }
     }
-    
-    public string GetFileName(string id)
+
+    private string GetFileName(string id)
     {
         return _gamesDirectory +
                Path.DirectorySeparatorChar +

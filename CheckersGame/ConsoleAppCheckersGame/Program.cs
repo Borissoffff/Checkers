@@ -1,16 +1,30 @@
 ﻿using ConsoleUI;
 using DAL;
+using DAL.DB;
 using DAL.FileSystem;
 using GameBrain;
 using MenuSystem;
+using Microsoft.EntityFrameworkCore;
 using ProjectDomain;
 using static System.Console;
 
+//dotnet ef database update --project DAL.DB --startup-project ConsoleAppCheckersGame
 
-IGameOptionsRepository optionsRepo = new GameOptionsRepositoryFileSystem();
-IGamesRepository gamesRepo = new GamesRepositoryFileSystem();
+var databaseEngine = "File System";
 
-//initialize two fundamental checkers settings and add them to FileSystem
+var dbOptions =
+    new DbContextOptionsBuilder<AppDbContext>()
+        .UseSqlite("Data Source=/Users/jegor/CheckersDB/checkers.db")
+        .Options;
+
+var ctx = new AppDbContext(dbOptions);
+IGameOptionsRepository optionsRepoDb = new GameOptionsRepositoryDb(ctx);
+IGamesRepository gamesRepoDb = new GamesRepositoryDb(ctx);
+
+IGameOptionsRepository optionsRepoFs = new GameOptionsRepositoryFileSystem();
+IGamesRepository gamesRepoFs = new GamesRepositoryFileSystem();
+
+//initialize two fundamental checkers settings and add them to FileSystem and SQLite
 var angloAmericanCheckersVersion = new CheckersOption
 {
     Name = "The Anglo-American version"
@@ -22,24 +36,28 @@ var continentalVersion = new CheckersOption
     Height = 10,
     Width = 10
 };
-optionsRepo.SaveGameOptions(angloAmericanCheckersVersion.Name, angloAmericanCheckersVersion);
-optionsRepo.SaveGameOptions(continentalVersion.Name, continentalVersion);
+
+optionsRepoFs.SaveGameOptions(angloAmericanCheckersVersion.Name, angloAmericanCheckersVersion);
+optionsRepoFs.SaveGameOptions(continentalVersion.Name, continentalVersion);
+
+optionsRepoDb.SaveGameOptions(angloAmericanCheckersVersion.Name, angloAmericanCheckersVersion);
+optionsRepoDb.SaveGameOptions(continentalVersion.Name, continentalVersion);
 
 //Anglo-American version is default version
 var currentGameOptions = angloAmericanCheckersVersion;
-//var game = new CheckersBrain(currentGameOptions);
 
+var optionsRepo = optionsRepoFs;
+var gamesRepo = gamesRepoFs;
 
 RunMainMenu();
 WriteLine();
 WriteLine("Press any key to exit ...");
 ReadKey(true);
 
-
 void RunMainMenu()
 {
     string title = "Main Menu";
-    string[] options = { "New Game", "Load Game", "Options", "Exit" };
+    string[] options = { "New Game", "Load Game", "Options", "Data Management Method Swap", "Exit" };
     Menu mainMenu = new Menu(title, options);
     int selectedIndex = mainMenu.Run();
 
@@ -55,6 +73,9 @@ void RunMainMenu()
             DisplayOptionsMenu();
             break;
         case 3:
+            SwapDataMethod();
+            break;
+        case 4:
             Exit();
             break;
     }
@@ -62,13 +83,13 @@ void RunMainMenu()
     
 void DisplayOptionsMenu()
 {
-    string title = "Options menu";
+    var title = "Options menu";
     string[] options = { "Create Options", "Display Saved Options",
         "Load Options", "Delete Options",
         "Back", "Exit"
     };
-    Menu optionsMenu = new Menu(title, options);
-    int selectedIndex = optionsMenu.Run();
+    var optionsMenu = new Menu(title, options);
+    var selectedIndex = optionsMenu.Run();
 
     switch (selectedIndex)
     {
@@ -139,7 +160,11 @@ void CreateOption()
     
     var name = CorrectStringInput(
         "Please write the name of the settings ",
-        "Options name cannot be empty");
+        "Options name cannot be empty",
+        forOptionsDb:true,
+        forGamesDb:false
+        );
+    
     var boardSize = CorrectBoardSize();
     var whiteStarts = WhoStartsGame();
 
@@ -206,36 +231,43 @@ void Exit()
 
 void CreateNewGame()
 {
+    Clear();
+    WriteLine(Menu.CheckersTitle);
+    WriteLine("Create your new game!");
     
-    string gameName = CorrectStringInput(
+    var gameName = CorrectStringInput(
         "Please enter the name of your game",
-        "Game name cannot be empty");
+        "Game name cannot be empty",
+        forOptionsDb:false,
+        forGamesDb:true
+        );
+    
     var game = new CheckersBrain(currentGameOptions);
 
+    var checkersGame = new CheckersGame
+    {
+        Name = gameName,
+        Player1Name = "Jegor",
+        Player2Name = "Igor",
+        CheckersOption = currentGameOptions,
+    };
+    
     string[] options = { "Make move", "Save the Game" };
     var menu = new Menu("", options);
     menu.ClearCheckersTitle();
     var selectedIndex = menu.Run(DrawBoard);
-
-    var checkersGame = new CheckersGame
-    {
-        Name = gameName
-    };
-
+    
     switch (selectedIndex)
     {
         case 0:
             WriteLine("move");
             break;
         case 1:
-            checkersGame.currentState = game.GetBoard();
             gamesRepo.SaveGame(gameName, checkersGame);
             LeaveSubSettingsMenu($"Done!\nGame {gameName} was successfully saved");
             break;
     }
-    
     void DrawBoard() => Ui.DrawGameBoard(game.GetBoard());
-    
 }
 
 void LoadGame()
@@ -243,6 +275,7 @@ void LoadGame()
     Clear();
     var l = new List<string>();
     var games = gamesRepo.GetGamesList();
+    
     foreach (var gameName in games)
     {
         l.Add(gameName + "\n");
@@ -251,13 +284,12 @@ void LoadGame()
     var res = l.ToArray();
     var menu = new Menu("Load Game", res);
     menu.ClearCheckersTitle();
-    var selectedIndex = menu.Run(WriteCurrentOptions);
+    var selectedIndex = menu.Run();
 
     var checkersGame = gamesRepo.GetGame(games[selectedIndex]);
     
-    WriteLine(checkersGame.Name);
+    LeaveSubGameMenu($"Done\nGame with name {checkersGame.Name} is loaded!");
     
-    LeaveSubGameMenu("Done");
 }
 
 void WriteCurrentOptions()
@@ -319,10 +351,32 @@ void LeaveSubGameMenu(string title, Action? action=null)
     }
 }
 
+void SwapDataMethod()
+{
+    string[] options = { "Use File System", "Use SQLite" };
+    var menu = new Menu($"Choose data accessing method\nCurrent method is {databaseEngine}\n", options);
+    menu.ClearCheckersTitle();
+    var selectedIndex = menu.Run();
+    switch (selectedIndex)
+    {
+        case 0:
+            databaseEngine = "File System";
+            optionsRepo = optionsRepoFs;
+            gamesRepo = gamesRepoFs;
+            break;
+        case 1:
+            databaseEngine = "SQlite";
+            optionsRepo = optionsRepoDb;
+            gamesRepo = gamesRepoDb;
+            break;
+    }
+    LeaveSubSettingsMenu($"Done!\nThe application uses {databaseEngine}");
+}
+
 int CorrectBoardSize()
 {
-    int boardSize = 0;
-    bool boardSizeIsCorrect = false;
+    var boardSize = 0;
+    var boardSizeIsCorrect = false;
     do 
     {
         WriteLine("Type your board size!\n" +
@@ -337,9 +391,7 @@ int CorrectBoardSize()
             boardSize = int.Parse(size);
         }
         catch (Exception)
-        {
-            // ignore
-        }
+        { /*ignore*/ }
 
         if (boardSize % 2 != 0)
         {
@@ -362,23 +414,47 @@ int CorrectBoardSize()
     return boardSize;
 }
 
-string CorrectStringInput(string message, string errorMessage)
+string CorrectStringInput(string message, string errorMessage, bool forOptionsDb=false, bool forGamesDb=false)
 {
     string? name = null;
     do
     {
         WriteLine(message);
         WriteLine();
-        var optionsName = ReadLine();
-        if (optionsName == "")
+        var input = ReadLine();
+        
+        if (input == "")
         {
             ForegroundColor = ConsoleColor.Red;
             WriteLine(errorMessage);
             ResetColor();
         }
-        else
+
+        if (forOptionsDb)
         {
-            name = optionsName;
+            if (input != null && !SettingsAlreadyInDb(input))
+            {
+                name = input;
+            }
+            else
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine($"Options with the name -> {input} already exists");
+                ResetColor();
+            }
+        }
+        else if (forGamesDb)
+        {
+            if (input != null && !GameAlreadyInDb(input))
+            {
+                name = input;
+            }
+            else
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine($"Game with the name -> {input} already exists");
+                ResetColor();
+            }
         }
     } while (name == null);
 
@@ -387,7 +463,7 @@ string CorrectStringInput(string message, string errorMessage)
 
 string WhoStartsGame()
 {
-    string whiteStarts = "";
+    var whiteStarts = "";
     do
     {
         WriteLine("Do you want white checkers make first move (y/n)");
@@ -412,5 +488,20 @@ string WhoStartsGame()
     } while (whiteStarts == "");
 
     return whiteStarts;
+}
+
+bool SettingsAlreadyInDb(string optionsName)
+{
+    return optionsRepo.GetGameOptionsList().Any(options => options.Equals(optionsName));
+}
+
+bool GameAlreadyInDb(string gameName)
+{
+    return gamesRepo.GetGamesList().Any(game => game.Equals(gameName));
+}
+
+EBoardPiece?[][] DeserializeBoard(string board)
+{
+    return System.Text.Json.JsonSerializer.Deserialize<EBoardPiece?[][]>(board)!;
 }
 

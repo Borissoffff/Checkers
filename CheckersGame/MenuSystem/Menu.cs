@@ -76,6 +76,5 @@ public class Menu
 
 
     public void ClearCheckersTitle() => CheckersTitle = "";
-    
 }
 
