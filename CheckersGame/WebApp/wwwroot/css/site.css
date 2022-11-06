@@ -1,0 +1,36 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+
+.table-black-cell {
+  background-color: black !important;
+}
+
+.table-white-cell {
+  background-color: white !important;
+}
+
+.table-white-checker-cell {
+  background-color: yellow !important;
+}
+
+.table-red-checker-cell {
+  background-color: red !important;
+}
+

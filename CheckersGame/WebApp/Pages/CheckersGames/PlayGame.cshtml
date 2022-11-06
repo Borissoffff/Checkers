@@ -1,0 +1,46 @@
+@page
+@using ProjectDomain
+@model WebApp.Pages_CheckersGames.PlayGame
+
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<div>
+    <table style="width: 75px !important;
+                    height: 75px !important;" class="table table-bordered game-board">
+        @for (var x = 0; x < Model.Brain.GetBoard().Length; x++)
+        {
+            <tr >
+                @for (var y = 0; y < Model.Brain.GetBoard()[0].Length; y++)
+                {
+                    <td class="table-cell @GetBoardCellClass(Model.Brain.GetBoard()[x][y])">
+                        @*@Model.Brain.GetBoard()[x][y]*@
+                    </td>
+                }
+            </tr>
+        }
+    </table>
+
+</div>
+</body>
+</html>
+
+@functions
+{
+    private string GetBoardCellClass(EBoardPiece? boardPiece)
+    {
+        return boardPiece switch
+        {
+            EBoardPiece.BlackSquare => "table-black-cell",
+            EBoardPiece.WhiteSquare => "table-white-cell",
+            EBoardPiece.BlackSquareWhiteChecker => "table-white-checker-cell",
+            EBoardPiece.BlackSquareRedChecker => "table-red-checker-cell",
+            _ => "table-black-cell"
+            };
+    }
+}
