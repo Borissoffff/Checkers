@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
     public DbSet<CheckersGame> CheckersGames { get; set; }
     public DbSet<CheckersOption> CheckersOptions { get; set; }
     public DbSet<CheckersGameState> CheckersGameStates { get; set; }
+    public DbSet<MovementLog> MovementLogs { get; set; }
     
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)

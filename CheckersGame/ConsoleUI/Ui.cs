@@ -5,7 +5,7 @@ namespace ConsoleUI;
 
 public static class Ui
 {
-    public static void DrawGameBoard(EBoardPiece?[][] board)
+    public static void DrawGameBoard(EBoardPiece[][] board)
     {
         var cols = board.GetLength(0);
         var rows = board[0].GetLength(0);
@@ -23,13 +23,13 @@ public static class Ui
  
         Write("   " + string.Concat(Enumerable.Repeat("-----", rows)) + "--");
         WriteLine();
-        for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < rows; j++) {
             
-            for (int j = 0; j < cols; j++)
+            for (int i = 0; i < cols; i++)
             {
-                if (j == 0)
+                if (i == 0)
                 {
-                    Write(numberList[i] > 9 ? $"{numberList[i]} |" : $" {numberList[i]} |");
+                    Write(numberList[j] > 9 ? $"{numberList[j]} |" : $" {numberList[j]} |");
                 }
 
                 string pieceStr = "";
@@ -38,7 +38,7 @@ public static class Ui
                     case EBoardPiece.BlackSquare:
                         pieceStr = empty;
                         break;
-                    case EBoardPiece.BlackSquareRedChecker:
+                    case EBoardPiece.BlackSquareBlackChecker:
                         ForegroundColor = ConsoleColor.Red;
                         pieceStr = checker;
                         break;
@@ -72,5 +72,4 @@ public static class Ui
         }
         return res;
     }
-    
 }

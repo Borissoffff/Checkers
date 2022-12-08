@@ -1,4 +1,5 @@
-﻿using ConsoleUI;
+﻿using ConsoleAppCheckersGame;
+using ConsoleUI;
 using DAL;
 using DAL.DB;
 using DAL.FileSystem;
@@ -9,6 +10,35 @@ using ProjectDomain;
 using static System.Console;
 
 //dotnet ef database update --project DAL.DB --startup-project ConsoleAppCheckersGame
+
+/*for (int i = 5 - 1; i > 2; i--)
+{
+    WriteLine(i);
+}*/
+
+List<T> ConcatListOfLists<T>(List<T> list) where T : class
+{
+    var result = new List<T>();
+    foreach (var l in list)
+    {
+        foreach (var el in (IEnumerable<T>)l)
+        {
+            result.Add(el);
+        }
+    }
+    return result;
+}
+
+var list = new List<List<int>>()
+{
+    new List<int>() { 1, 2, 3 },
+    new List<int>() { 1, 2, 3 },
+    new List<int>() { 1, 2, 3 },
+};
+
+var res = ConcatListOfLists(list);
+res.ForEach(p => WriteLine(p));
+
 
 var databaseEngine = "File System";
 
@@ -47,12 +77,16 @@ optionsRepoDb.SaveGameOptions(continentalVersion.Name, continentalVersion);
 var currentGameOptions = angloAmericanCheckersVersion;
 
 var optionsRepo = optionsRepoFs;
-var gamesRepo = gamesRepoFs;
+var gamesRepo = gamesRepoDb;
 
-RunMainMenu();
+/*var game = gamesRepo.GetGame(11);
+var Brain = new CheckersBrain(game!.CheckersOption!, game.CheckersGameStates!.LastOrDefault());;
+Ui.DrawGameBoard(Brain.GetBoard());*/
+
+/*RunMainMenu();
 WriteLine();
 WriteLine("Press any key to exit ...");
-ReadKey(true);
+ReadKey(true);*/
 
 void RunMainMenu()
 {
@@ -242,7 +276,8 @@ void CreateNewGame()
         forGamesDb:true
         );
     
-    var game = new CheckersBrain(currentGameOptions);
+    var game = new CheckersBrain(currentGameOptions, state:null);
+    var lastGameId = gamesRepo.GetLastGameId();
 
     var checkersGame = new CheckersGame
     {
@@ -251,7 +286,8 @@ void CreateNewGame()
         Player2Name = "Igor",
         CheckersOption = currentGameOptions,
     };
-    
+    if (databaseEngine.Equals("File System")) checkersGame.Id = gamesRepo.GetLastGameId() + 1;
+        
     string[] options = { "Make move", "Save the Game" };
     var menu = new Menu("", options);
     menu.ClearCheckersTitle();
@@ -263,7 +299,7 @@ void CreateNewGame()
             WriteLine("move");
             break;
         case 1:
-            gamesRepo.SaveGame(gameName, checkersGame);
+            gamesRepo.SaveGame(checkersGame, (lastGameId + 1).ToString());
             LeaveSubSettingsMenu($"Done!\nGame {gameName} was successfully saved");
             break;
     }
@@ -276,9 +312,9 @@ void LoadGame()
     var l = new List<string>();
     var games = gamesRepo.GetGamesList();
     
-    foreach (var gameName in games)
+    foreach (var game in games)
     {
-        l.Add(gameName + "\n");
+        l.Add(game.Name + "\n");
     }
 
     var res = l.ToArray();
@@ -286,7 +322,9 @@ void LoadGame()
     menu.ClearCheckersTitle();
     var selectedIndex = menu.Run();
 
-    var checkersGame = gamesRepo.GetGame(games[selectedIndex]);
+    var chosenGame = games[selectedIndex];
+
+    var checkersGame = gamesRepo.GetGame(chosenGame.Id);
     
     LeaveSubGameMenu($"Done\nGame with name {checkersGame.Name} is loaded!");
     
@@ -497,11 +535,12 @@ bool SettingsAlreadyInDb(string optionsName)
 
 bool GameAlreadyInDb(string gameName)
 {
-    return gamesRepo.GetGamesList().Any(game => game.Equals(gameName));
+    try
+    {
+        return gamesRepo.GetGamesList().Any(game => game.Equals(gameName));
+    }
+    catch (Exception)
+    {
+        return false;
+    }
 }
-
-EBoardPiece?[][] DeserializeBoard(string board)
-{
-    return System.Text.Json.JsonSerializer.Deserialize<EBoardPiece?[][]>(board)!;
-}
-

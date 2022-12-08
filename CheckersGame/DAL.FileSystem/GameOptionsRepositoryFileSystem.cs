@@ -6,7 +6,13 @@ public class GameOptionsRepositoryFileSystem : IGameOptionsRepository
 {
     private const string JsonExtension = "json";
     private readonly string _optionsDirectory = "." + Path.DirectorySeparatorChar + "options";
-     public List<string> GetGameOptionsList()
+    public string Name => "File System";
+    public void SaveChanges()
+    {
+        throw new NotImplementedException("save changes for file system does not work");
+    }
+
+    public List<string> GetGameOptionsList()
     {
         CheckOrCreateDirectory();
 

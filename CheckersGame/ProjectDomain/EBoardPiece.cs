@@ -4,8 +4,8 @@ public enum EBoardPiece
 {
     WhiteSquare,
     BlackSquare,
-    BlackSquareRedChecker,
+    BlackSquareBlackChecker,
     BlackSquareWhiteChecker,
-    BlackSquareRedKing,
+    BlackSquareBlackKing,
     BlackSquareWhiteKing
 }

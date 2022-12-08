@@ -1,5 +1,5 @@
 @page
-@model WebApp.Pages_CheckersGames.IndexModel
+@model IndexModel
 
 @{
     ViewData["Title"] = "Index";
@@ -52,20 +52,30 @@
             <td>
                 @Html.DisplayFor(modelItem => item.StartedAt)
             </td>
+            
             <td>
                 @Html.DisplayFor(modelItem => item.GameOverAt)
             </td>
+        
+       
             <td>
                 @Html.DisplayFor(modelItem => item.GameWonByPlayer)
             </td>
+            
             <td>
-                @Html.DisplayFor(modelItem => item.Player1Name)
+                Continue as:
+                <a asp-page="./PlayGame" asp-route-id="@item.Id" asp-route-player="player1">
+                    @Html.DisplayFor(modelItem => item.Player1Name)
+                </a>
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Player1Type)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Player2Name)
+                Continue as:
+                <a asp-page="./PlayGame" asp-route-id="@item.Id" asp-route-player="player2">
+                    @Html.DisplayFor(modelItem => item.Player2Name)
+                </a>
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Player2Type)
@@ -74,7 +84,6 @@
                 @Html.DisplayFor(modelItem => item.CheckersOption!.Name)
             </td>
             <td>
-                <a asp-page="./PlayGame" asp-route-id="@item.Id">Continue</a> |
                 <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>

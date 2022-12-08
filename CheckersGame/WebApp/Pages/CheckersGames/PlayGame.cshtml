@@ -1,6 +1,8 @@
 @page
 @using ProjectDomain
-@model WebApp.Pages_CheckersGames.PlayGame
+@using System.Security.Principal
+@using GameBrain
+@model PlayGame
 
 
 <!DOCTYPE html>
@@ -8,39 +10,261 @@
 <html>
 <head>
     <title></title>
-</head>
+</head> 
 <body>
-<div>
-    <table style="width: 75px !important;
-                    height: 75px !important;" class="table table-bordered game-board">
-        @for (var x = 0; x < Model.Brain.GetBoard().Length; x++)
-        {
-            <tr >
-                @for (var y = 0; y < Model.Brain.GetBoard()[0].Length; y++)
-                {
-                    <td class="table-cell @GetBoardCellClass(Model.Brain.GetBoard()[x][y])">
-                        @*@Model.Brain.GetBoard()[x][y]*@
-                    </td>
-                }
-            </tr>
-        }
-    </table>
+@{
+    var gameBoard = Model.Brain.GetBoard();
+    var nextMoveByBlack = Model.Brain.NextMoveByBlack();
+    var gameOver = Model.Brain.GameOver();
+    var chars = GetCharList();
+    var nums = Enumerable.Range(1,gameBoard[0].Length).ToList();
+    nums.Reverse();
+}
+<h1>
+</h1>
 
+<h1>@Model.CheckerCanEatAgain</h1>
+<h1>Possible moves: @(Model.PossibleMoves != null)</h1>
+
+@if (gameOver)
+{
+    <h1> Game over!</h1>
+    <h2> The winner is @(nextMoveByBlack ? Model.Game.Player1Name : Model.Game.Player2Name)</h2>
+}
+else
+{
+    <h2>
+        Next move : @(nextMoveByBlack 
+                        ? $"Player 2 {Model.Game.Player2Name} -- Black checkers move" 
+                        : $"Player 1 {Model.Game.Player1Name} -- White checkers move")
+    </h2> 
+}
+
+<div class="wrapper">
+    <div class="numbers">
+        @for (int i = 0; i < nums.Count; i++)
+        {
+            <h1 class="number">@nums[i]</h1>
+        }
+    </div>
+    <div class="board">
+        <table class="table table-bordered game-table">
+            <div class="letters">
+                @for (int i = 0; i < gameBoard.Length; i++)
+                {
+                    <h1 class="letter">@chars[i]</h1>
+                }
+            </div>
+            @for (var y = 0; y < gameBoard.Length; y++)
+            {
+                <tr>
+                    @for (var x = 0; x < gameBoard[0].Length; x++)
+                    {
+                        //this part only works if we selected checker we want to move and we have options to move it
+                        if (Model.PossibleMoves != null && Model.PossibleMoves.AllPossibleMoves.Any())
+                        {
+                            if (MoveIsPossible(@x, @y, Model.PossibleMoves))
+                            {
+                                /* Make clickable only those cells, where checker can move */
+                                <td class="game-table-cell possible-checker"
+                                    onclick="window.location = 
+                                    '/CheckersGames/PlayGame?id=@Model.Game.Id&xFrom=@Model.PossibleMoves.CheckerToMove.X&yFrom=@Model.PossibleMoves.CheckerToMove.Y&x=@x&y=@y&cmd=makeMove'">
+                                </td>
+                            }
+                            else
+                            {
+                                RenderCell(x,y);
+                                @*if (CorrectCheckerColor(gameBoard[x][y], nextMoveByBlack))
+                                {
+                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
+                                        onclick="window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@x&y=@y'">
+                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
+                                        {
+                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                                        }
+                                    </td>
+                                }
+                                else
+                                {
+                                    /* Display all the non-clickable cells */
+                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])">
+                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
+                                        {
+                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                                        }
+                                    </td>
+                                }*@
+                            }
+                        }
+                        else
+                        {
+                            if (Model.CheckerCanEatAgain)
+                            {
+                                if (Model.Logs!.Last().MovementToX == x && Model.Logs!.Last().MovementToY == y)
+                                {
+                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
+                                        onclick="window.location = 
+                                        '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@Model.Logs!.Last().MovementToX&y=@Model.Logs!.Last().MovementToY'">
+                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
+                                        {
+                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                                        }
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])">
+                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
+                                        {
+                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                                        }
+                                    </td>
+                                }
+                            }
+                            else
+                            {
+                                RenderCell(x, y);
+                                @*if (CorrectCheckerColor(gameBoard[x][y], nextMoveByBlack))
+                                {
+
+                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
+                                        onclick="window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@x&y=@y'">
+                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
+                                        {
+                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                                        }
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])">
+                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
+                                        {
+                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                                        }
+                                    </td>
+                                }*@
+                            }
+                        }
+                    }
+                </tr>
+            }
+        </table>
+    </div>
+    @if (Model.Logs != null)
+    {
+        <div class="scroll-bg">
+            <div class="scroll-div">
+                <div class="scroll-object">
+                    @if (gameOver)
+                    {
+                        <div>Game Over!</div>
+                    }
+                    @foreach (var log in Model.Logs.Reverse())
+                    {
+                        <div class="text-inside-logger">
+                            Move by <b>@log.WhoMoved</b><br/>
+                            From position <b>@chars[log.MovementFromX]@nums[log.MovementFromY]</b>
+                            To position <b>@chars[log.MovementToX]@nums[log.MovementToY]</b>
+                        </div>
+                        // @StringifyLog(log)
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
 </body>
 </html>
 
 @functions
 {
-    private string GetBoardCellClass(EBoardPiece? boardPiece)
+    private string GetBoardCellClass(EBoardPiece boardPiece)
+    {
+        var blackSquares = new List<EBoardPiece>()
+        {
+            EBoardPiece.BlackSquare,
+            EBoardPiece.BlackSquareBlackChecker,
+            EBoardPiece.BlackSquareBlackKing,
+            EBoardPiece.BlackSquareWhiteKing,
+            EBoardPiece.BlackSquareWhiteChecker
+        };
+        return blackSquares.Contains(boardPiece) ? "game-table-cell-black" : "game-table-cell-white";
+    }
+
+    private string GetCheckerClass(EBoardPiece? boardPiece)
     {
         return boardPiece switch
         {
-            EBoardPiece.BlackSquare => "table-black-cell",
-            EBoardPiece.WhiteSquare => "table-white-cell",
-            EBoardPiece.BlackSquareWhiteChecker => "table-white-checker-cell",
-            EBoardPiece.BlackSquareRedChecker => "table-red-checker-cell",
-            _ => "table-black-cell"
+            EBoardPiece.BlackSquareBlackKing => "red-king",
+            EBoardPiece.BlackSquareWhiteKing => "white-king",
+            EBoardPiece.BlackSquareWhiteChecker => "white-checker",
+            _ => "red-checker"
             };
+    }
+
+    private bool BoardPieceIsChecker(EBoardPiece? boardPiece)
+    {
+        return boardPiece 
+                is EBoardPiece.BlackSquareBlackChecker 
+                or EBoardPiece.BlackSquareWhiteChecker
+                or EBoardPiece.BlackSquareBlackKing
+                or EBoardPiece.BlackSquareWhiteKing;
+    }
+
+    private bool MoveIsPossible(int x, int y, PossibleMoves possibleMoves)
+    {
+        return possibleMoves.AllPossibleMoves.Any(coordinate => coordinate.X == x && coordinate.Y == y);
+    }
+
+    private bool CorrectCheckerColor(EBoardPiece boardPiece, bool nextMoveByBlack)
+    {
+        if (nextMoveByBlack && 
+            boardPiece is EBoardPiece.BlackSquareBlackChecker 
+                or EBoardPiece.BlackSquareBlackKing) return true;
+        
+        return !nextMoveByBlack && 
+               boardPiece is EBoardPiece.BlackSquareWhiteChecker 
+                   or EBoardPiece.BlackSquareWhiteKing;
+    }
+    
+    private static List<string> GetCharList()
+    {
+        var charList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToList();
+        var res = charList.Select(ch => ch.ToString()).ToList();
+        foreach (var ch in charList)
+        {
+            res.AddRange(charList.Where(ch2 => !ch.Equals(ch2)).Select(ch2 => $"{ch}{ch2}"));
+        }
+        return res;
+    }
+
+    private void RenderCell(int x, int y)
+    {
+        var gameBoard = Model.Brain.GetBoard();
+        var nextMoveByBlack = Model.Brain.NextMoveByBlack();
+        
+        if (CorrectCheckerColor(gameBoard[x][y], nextMoveByBlack))
+        {
+            <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
+                onclick="window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@x&y=@y'">
+                @if (BoardPieceIsChecker(gameBoard[x][y]))
+                {
+                    <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                }
+            </td>
+        }
+        else
+        {
+            /* Display all the non-clickable cells */
+            <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])">
+                @if (BoardPieceIsChecker(gameBoard[x][y]))
+                {
+                    <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
+                }
+            </td>
+        }
     }
 }

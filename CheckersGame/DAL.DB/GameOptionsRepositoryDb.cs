@@ -2,18 +2,15 @@ using ProjectDomain;
 
 namespace DAL.DB;
 
-public class GameOptionsRepositoryDb : IGameOptionsRepository
+public class GameOptionsRepositoryDb : BaseRepository, IGameOptionsRepository
 {
-    private readonly AppDbContext _dbContext;
-    public string Name = "DB";
-
-    public GameOptionsRepositoryDb(AppDbContext dbContext)
+    public GameOptionsRepositoryDb(AppDbContext dbContext) : base(dbContext)
     {
-        _dbContext = dbContext;
     }
+
     public List<string> GetGameOptionsList()
     {
-        return _dbContext
+        return DbContext
             .CheckersOptions
             .OrderBy(option => option.Name)
             .Select(option => option.Name)
@@ -22,22 +19,23 @@ public class GameOptionsRepositoryDb : IGameOptionsRepository
 
     public CheckersOption GetGameOptions(string id)
     {
-        return _dbContext.CheckersOptions.First(option => option.Name == id);
+        return DbContext.CheckersOptions.First(option => option.Name == id);
     }
 
     public void SaveGameOptions(string id, CheckersOption options)
     {
-        if (_dbContext.CheckersOptions.Any(o => o.Name == options.Name)) return;
+        if (DbContext.CheckersOptions.Any(o => o.Name == options.Name)) return;
         
-        _dbContext.CheckersOptions.Add(options);
-        _dbContext.SaveChanges();
+        DbContext.CheckersOptions.Add(options);
+        DbContext.SaveChanges();
 
     }
 
     public void DeleteGameOptions(string id)
     {
         var options = GetGameOptions(id);
-        _dbContext.CheckersOptions.Remove(options);
-        _dbContext.SaveChanges();
+        DbContext.CheckersOptions.Remove(options);
+        DbContext.SaveChanges();
     }
+
 }

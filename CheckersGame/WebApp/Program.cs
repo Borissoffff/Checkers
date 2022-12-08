@@ -1,4 +1,5 @@
 
+using DAL;
 using DAL.DB;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,9 @@ builder.Services.AddRazorPages();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
+
+builder.Services.AddScoped<IGamesRepository, GamesRepositoryDb>();
+builder.Services.AddScoped<IMovementsLogRepository, MovementLogDb>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

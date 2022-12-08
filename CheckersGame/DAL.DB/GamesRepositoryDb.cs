@@ -1,40 +1,44 @@
+using Microsoft.EntityFrameworkCore;
 using ProjectDomain;
 
 namespace DAL.DB;
 
-public class GamesRepositoryDb : IGamesRepository
+public class GamesRepositoryDb : BaseRepository, IGamesRepository
 {
-    private readonly AppDbContext _dbContext;
-    public string Name = "DB";
-
-    public GamesRepositoryDb(AppDbContext dbContext)
+    public GamesRepositoryDb(AppDbContext dbContext) : base(dbContext)
     {
-        _dbContext = dbContext;
     }
-    public List<string> GetGamesList()
+    public List<CheckersGame> GetGamesList()
     {
-        return _dbContext
+        return DbContext
             .CheckersGames
-            .OrderBy(game => game.Name)
-            .Select(game => game.Name)
+            .Include(o => o.CheckersOption)
+            .OrderBy(g => g.StartedAt)
             .ToList();
     }
-
-    public CheckersGame GetGame(string id)
+    public CheckersGame? GetGame(int? id)
     {
-        return _dbContext.CheckersGames.First(game => game.Name == id);
+        return DbContext.CheckersGames
+            .Include(g => g.CheckersOption)
+            .Include(g => g.CheckersGameStates)
+            .FirstOrDefault(g => g.Id == id);
     }
 
-    public void SaveGame(string id, CheckersGame game)
+    public int GetLastGameId() => DbContext.CheckersGames.Any() 
+        ? DbContext.CheckersGames.OrderBy(g => g.Id).Last().Id 
+        : 0;
+
+    public CheckersGame SaveGame(CheckersGame game, string? id = null)
     {
-        _dbContext.CheckersGames.Add(game);
-        _dbContext.SaveChanges();
+        DbContext.CheckersGames.Add(game);
+        DbContext.SaveChanges();
+        return game;
     }
 
-    public void DeleteGame(string id)
+    public void DeleteGame(int id)
     {
         var gameToDelete = GetGame(id);
-        _dbContext.CheckersGames.Remove(gameToDelete);
-        _dbContext.SaveChanges();
+        DbContext.CheckersGames.Remove(gameToDelete);
+        DbContext.SaveChanges();
     }
 }

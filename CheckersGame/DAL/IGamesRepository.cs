@@ -2,18 +2,19 @@ using ProjectDomain;
 
 namespace DAL;
 
-public interface IGamesRepository
+public interface IGamesRepository : IBaseRepository
 {
     // crud methods
 
     // read
-    List<string> GetGamesList();
+    List<CheckersGame> GetGamesList();
     
-    CheckersGame GetGame(string id);
+    CheckersGame? GetGame(int? id);
+    int GetLastGameId();
 
     // create and update
-    void SaveGame(string id, CheckersGame game);
+    CheckersGame SaveGame(CheckersGame game, string? id=null);
     
     // delete
-    void DeleteGame(string id);
+    void DeleteGame(int id);
 }

@@ -3,6 +3,7 @@ using System;
 using DAL.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.DB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221205141555_EditMovementLogs")]
+    partial class EditMovementLogs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.0-rc.2.22472.11");
@@ -138,22 +141,10 @@ namespace DAL.DB.Migrations
                     b.Property<int>("CheckersGameId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("EatenCheckerX")
+                    b.Property<int>("MovementFromId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("EatenCheckerY")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MovementFromX")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MovementFromY")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MovementToX")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MovementToY")
+                    b.Property<int>("MovementToId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("WhoMoved")
@@ -163,6 +154,10 @@ namespace DAL.DB.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CheckersGameId");
+
+                    b.HasIndex("MovementFromId");
+
+                    b.HasIndex("MovementToId");
 
                     b.ToTable("MovementLogs");
                 });
@@ -197,7 +192,23 @@ namespace DAL.DB.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ProjectDomain.DbCoordinate", "MovementFrom")
+                        .WithMany()
+                        .HasForeignKey("MovementFromId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProjectDomain.DbCoordinate", "MovementTo")
+                        .WithMany()
+                        .HasForeignKey("MovementToId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CheckersGame");
+
+                    b.Navigation("MovementFrom");
+
+                    b.Navigation("MovementTo");
                 });
 
             modelBuilder.Entity("ProjectDomain.CheckersGame", b =>

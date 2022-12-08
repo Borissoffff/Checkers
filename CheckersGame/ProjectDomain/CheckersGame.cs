@@ -25,5 +25,6 @@ public class CheckersGame
     public CheckersOption? CheckersOption { get; set; }
     
     public ICollection<CheckersGameState>? CheckersGameStates { get; set; }
-
+    
+    public ICollection<MovementLog>? MovementLogs { get; set; }
 }

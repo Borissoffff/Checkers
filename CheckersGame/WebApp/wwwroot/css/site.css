@@ -17,20 +17,113 @@ body {
   margin-bottom: 60px;
 }
 
+.board {
+  float: left;
+  margin-bottom: 10%;
+}
 
-.table-black-cell {
+.game-table {
+  width: initial;
+  background-color: #cfe2ff;
+  border: 5px solid black;
+}
+
+.game-table-cell {
+  width: 75px;
+  height: 75px;
+}
+
+.game-table-cell-black {
   background-color: black !important;
 }
 
-.table-white-cell {
+.game-table-cell-white {
   background-color: white !important;
 }
 
-.table-white-checker-cell {
+.game-table-cell-white-checker {
   background-color: yellow !important;
 }
 
-.table-red-checker-cell {
+.game-table-cell-black-checker {
   background-color: red !important;
 }
+
+.checker {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.red-checker {
+  border: 5px solid red;
+  /*background-color: red;*/
+}
+
+.white-checker {
+  border: 5px solid white;
+  /*background-color: white;*/
+}
+
+.possible-checker {
+  background-color: gray;
+}
+
+.red-king {
+  background-color: darkred;
+  border: 5px solid red;
+}
+
+.white-king {
+  background-color: white;
+  border: 5px cyan ;
+}
+
+.scroll-bg {
+  background-color: #20c997;
+  width: 400px;
+  padding: 30px;
+  border-radius: 20px;
+  float: left;
+  margin: 10% auto 10% 10%;
+}
+
+.scroll-div {
+  width: 400px;
+  background-color: #20c997;
+  height: 300px;
+  overflow: hidden;
+  overflow-y: scroll;
+}
+
+.scroll-object {
+  color: black;
+  padding: 20px;
+}
+
+.text-inside-logger {
+  margin-bottom: 10px;
+}
+
+.numbers {
+  float: left;
+  padding-top: 75px;
+}
+
+.number {
+  width: 75px;
+  height: 75px;
+  margin: 0;
+  padding: 0;
+}
+
+.letter {
+  float: left;
+  width: 75px;
+  height: 75px;
+  margin: 0;
+  padding: 0;
+}
+
 

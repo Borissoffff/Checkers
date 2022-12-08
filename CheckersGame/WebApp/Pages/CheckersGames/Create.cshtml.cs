@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DAL;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,11 +13,13 @@ namespace WebApp.Pages_CheckersGames
 {
     public class CreateModel : PageModel
     {
-        private readonly DAL.DB.AppDbContext _context;
+        private readonly AppDbContext _context;
+        private readonly IGamesRepository _gameRepo; 
 
-        public CreateModel(DAL.DB.AppDbContext context)
+        public CreateModel(AppDbContext context, IGamesRepository gameRepo)
         {
             _context = context;
+            _gameRepo = gameRepo;
         }
 
         public IActionResult OnGet()
@@ -39,10 +42,9 @@ namespace WebApp.Pages_CheckersGames
               return Page();
           }
 
-          _context.CheckersGames.Add(CheckersGame);
-          await _context.SaveChangesAsync();
+          CheckersGame = _gameRepo.SaveGame(CheckersGame);
 
-          return RedirectToPage("./PlayGame");
+          return RedirectToPage("./LaunchGame", new {id = CheckersGame.Id});
         }
     }
 }
