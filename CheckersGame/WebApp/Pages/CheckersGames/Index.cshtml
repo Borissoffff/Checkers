@@ -1,4 +1,5 @@
 @page
+@using ProjectDomain
 @model IndexModel
 
 @{
@@ -64,18 +65,24 @@
             
             <td>
                 Continue as:
-                <a asp-page="./PlayGame" asp-route-id="@item.Id" asp-route-player="player1">
-                    @Html.DisplayFor(modelItem => item.Player1Name)
-                </a>
+                    @if (item.Player1Type != EPlayerType.Ai)
+                    {
+                        <a asp-page="./PlayGame" asp-route-id="@item.Id" asp-route-playerNr="0">
+                            @Html.DisplayFor(modelItem => item.Player1Name)
+                        </a>
+                    }
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Player1Type)
             </td>
             <td>
                 Continue as:
-                <a asp-page="./PlayGame" asp-route-id="@item.Id" asp-route-player="player2">
-                    @Html.DisplayFor(modelItem => item.Player2Name)
-                </a>
+                @if (item.Player2Type != EPlayerType.Ai)
+                {
+                    <a asp-page="./PlayGame" asp-route-id="@item.Id" asp-route-playerNr="1">
+                        @Html.DisplayFor(modelItem => item.Player2Name)
+                    </a>
+                }
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Player2Type)

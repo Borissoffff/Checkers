@@ -5,7 +5,7 @@ namespace ConsoleUI;
 
 public static class Ui
 {
-    public static void DrawGameBoard(EBoardPiece[][] board)
+    public static void DrawGameBoard(EBoardPiece[][] board, PossibleMoves? possibleMoves=null)
     {
         var cols = board.GetLength(0);
         var rows = board[0].GetLength(0);
@@ -15,6 +15,12 @@ public static class Ui
         
         var charList = GetCharList().Take(cols).ToList();
 
+        List<Coordinate>? coordOfPossibleMoves = null;
+        if (possibleMoves != null)
+        {
+            coordOfPossibleMoves = possibleMoves.AllPossibleMoves.ToList();
+        }
+        
         var checker = "O";
         var empty = " ";
         
@@ -23,27 +29,40 @@ public static class Ui
  
         Write("   " + string.Concat(Enumerable.Repeat("-----", rows)) + "--");
         WriteLine();
-        for (int j = 0; j < rows; j++) {
+        for (int y = 0; y < rows; y++) {
             
-            for (int i = 0; i < cols; i++)
+            for (int x = 0; x < cols; x++)
             {
-                if (i == 0)
+                if (x == 0)
                 {
-                    Write(numberList[j] > 9 ? $"{numberList[j]} |" : $" {numberList[j]} |");
+                    Write(numberList[y] > 9 ? $"{numberList[y]} |" : $" {numberList[y]} |");
                 }
 
                 string pieceStr = "";
-                switch (board[i][j])
+                switch (board[x][y])
                 {
                     case EBoardPiece.BlackSquare:
                         pieceStr = empty;
+                        if (coordOfPossibleMoves != null 
+                            && coordOfPossibleMoves.Any(coordinate => coordinate.X == x && coordinate.Y == y))
+                        {
+                            BackgroundColor = ConsoleColor.Yellow;
+                        }
                         break;
                     case EBoardPiece.BlackSquareBlackChecker:
-                        ForegroundColor = ConsoleColor.Red;
+                        ForegroundColor = ConsoleColor.DarkYellow;
                         pieceStr = checker;
                         break;
                     case EBoardPiece.BlackSquareWhiteChecker:
                         pieceStr = checker;
+                        break;
+                    case EBoardPiece.BlackSquareBlackKing:
+                        pieceStr = checker;
+                        ForegroundColor = ConsoleColor.Red;
+                        break;
+                    case EBoardPiece.BlackSquareWhiteKing:
+                        pieceStr = checker;
+                        ForegroundColor = ConsoleColor.Blue;
                         break;
                     case EBoardPiece.WhiteSquare:
                         pieceStr = empty;

@@ -3,6 +3,7 @@ using System;
 using DAL.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.DB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221227201056_AddingLogsToGameSate")]
+    partial class AddingLogsToGameSate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.0-rc.2.22472.11");
@@ -74,6 +77,9 @@ namespace DAL.DB.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("MovementLogId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("SerializedGameState")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -81,6 +87,8 @@ namespace DAL.DB.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CheckersGameId");
+
+                    b.HasIndex("MovementLogId");
 
                     b.ToTable("CheckersGameStates");
                 });
@@ -169,7 +177,15 @@ namespace DAL.DB.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ProjectDomain.MovementLog", "MovementLog")
+                        .WithMany()
+                        .HasForeignKey("MovementLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CheckersGame");
+
+                    b.Navigation("MovementLog");
                 });
 
             modelBuilder.Entity("ProjectDomain.MovementLog", b =>

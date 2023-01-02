@@ -1,5 +1,6 @@
 html {
   font-size: 14px;
+  height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -29,8 +30,9 @@ body {
 }
 
 .game-table-cell {
-  width: 75px;
-  height: 75px;
+/*  width: 50px;
+  height: 50px;*/
+  width: 5%;
 }
 
 .game-table-cell-black {
@@ -50,8 +52,9 @@ body {
 }
 
 .checker {
-  width: 54px;
-  height: 54px;
+  width: 29px;
+  height: 29px;
+
   border-radius: 50%;
   position: absolute;
 }
@@ -83,10 +86,14 @@ body {
 .scroll-bg {
   background-color: #20c997;
   width: 400px;
-  padding: 30px;
+  padding-top: 30px;
   border-radius: 20px;
   float: left;
   margin: 10% auto 10% 10%;
+}
+
+tr {
+  height: 50px;
 }
 
 .scroll-div {
@@ -108,20 +115,20 @@ body {
 
 .numbers {
   float: left;
-  padding-top: 75px;
+  padding-top: 50px;
 }
 
 .number {
-  width: 75px;
-  height: 75px;
+  width: 50px;
+  height: 50px;
   margin: 0;
   padding: 0;
 }
 
 .letter {
   float: left;
-  width: 75px;
-  height: 75px;
+  width: 50px;
+  height: 50px;
   margin: 0;
   padding: 0;
 }

@@ -3,6 +3,7 @@ using System;
 using DAL.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.DB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221227202640_AddingLogsToGameSate2")]
+    partial class AddingLogsToGameSate2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.0-rc.2.22472.11");
@@ -121,6 +124,9 @@ namespace DAL.DB.Migrations
                     b.Property<int>("CheckersGameId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("CheckersGameStateId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("EatenCheckerX")
                         .HasColumnType("INTEGER");
 
@@ -146,6 +152,9 @@ namespace DAL.DB.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CheckersGameId");
+
+                    b.HasIndex("CheckersGameStateId")
+                        .IsUnique();
 
                     b.ToTable("MovementLogs");
                 });
@@ -180,7 +189,15 @@ namespace DAL.DB.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ProjectDomain.CheckersGameState", "CheckersGameState")
+                        .WithOne("MovementLog")
+                        .HasForeignKey("ProjectDomain.MovementLog", "CheckersGameStateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CheckersGame");
+
+                    b.Navigation("CheckersGameState");
                 });
 
             modelBuilder.Entity("ProjectDomain.CheckersGame", b =>
@@ -188,6 +205,11 @@ namespace DAL.DB.Migrations
                     b.Navigation("CheckersGameStates");
 
                     b.Navigation("MovementLogs");
+                });
+
+            modelBuilder.Entity("ProjectDomain.CheckersGameState", b =>
+                {
+                    b.Navigation("MovementLog");
                 });
 
             modelBuilder.Entity("ProjectDomain.CheckersOption", b =>

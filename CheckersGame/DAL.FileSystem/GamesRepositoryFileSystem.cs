@@ -7,10 +7,12 @@ public class GamesRepositoryFileSystem : IGamesRepository
     private const string JsonExtension = "json";
     private readonly string _gamesDirectory = "." + Path.DirectorySeparatorChar + "games";
     public string Name => "File System";
-    public void SaveChanges()
+    public void SaveChanges(int? id)
     {
-        throw new NotImplementedException("save changes for file system does not work");
+        
     }
+
+    public void SaveChanges() { }
 
     public List<CheckersGame> GetGamesList()
     {
@@ -65,7 +67,7 @@ public class GamesRepositoryFileSystem : IGamesRepository
 
     public void DeleteGame(int id)
     {
-        throw new NotImplementedException();
+        File.Delete(GetFileName(id.ToString()));
     }
 
     private void CheckOrCreateDirectory()

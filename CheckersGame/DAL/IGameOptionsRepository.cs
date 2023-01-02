@@ -2,7 +2,7 @@ using ProjectDomain;
 
 namespace DAL;
 
-public interface IGameOptionsRepository : IBaseRepository
+public interface IGameOptionsRepository
 {
     // crud methods
 

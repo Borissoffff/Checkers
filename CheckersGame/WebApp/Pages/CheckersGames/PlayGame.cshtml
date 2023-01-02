@@ -1,7 +1,5 @@
 @page
 @using ProjectDomain
-@using System.Security.Principal
-@using GameBrain
 @model PlayGame
 
 
@@ -20,24 +18,21 @@
     var nums = Enumerable.Range(1,gameBoard[0].Length).ToList();
     nums.Reverse();
 }
-<h1>
-</h1>
 
-<h1>@Model.CheckerCanEatAgain</h1>
-<h1>Possible moves: @(Model.PossibleMoves != null)</h1>
 
 @if (gameOver)
 {
     <h1> Game over!</h1>
     <h2> The winner is @(nextMoveByBlack ? Model.Game.Player1Name : Model.Game.Player2Name)</h2>
 }
+else if (BothPlayersAreAi())
+{
+    <h1>Battle of Artificial Intelligences</h1>
+}
 else
 {
-    <h2>
-        Next move : @(nextMoveByBlack 
-                        ? $"Player 2 {Model.Game.Player2Name} -- Black checkers move" 
-                        : $"Player 1 {Model.Game.Player1Name} -- White checkers move")
-    </h2> 
+    <h1>Playing as: @GetPlayerName()</h1>
+    <h2>Your status: @GetPlayerMoveStatus()</h2>
 }
 
 <div class="wrapper">
@@ -63,48 +58,28 @@ else
                         //this part only works if we selected checker we want to move and we have options to move it
                         if (Model.PossibleMoves != null && Model.PossibleMoves.AllPossibleMoves.Any())
                         {
-                            if (MoveIsPossible(@x, @y, Model.PossibleMoves))
+                            if (IsPlayerMove() && MoveIsPossible(@x, @y, Model.PossibleMoves))
                             {
                                 /* Make clickable only those cells, where checker can move */
                                 <td class="game-table-cell possible-checker"
                                     onclick="window.location = 
-                                    '/CheckersGames/PlayGame?id=@Model.Game.Id&xFrom=@Model.PossibleMoves.CheckerToMove.X&yFrom=@Model.PossibleMoves.CheckerToMove.Y&x=@x&y=@y&cmd=makeMove'">
+                                    '/CheckersGames/PlayGame?id=@Model.Game.Id&xFrom=@Model.PossibleMoves.CheckerToMove.X&yFrom=@Model.PossibleMoves.CheckerToMove.Y&x=@x&y=@y&cmd=makeMove&playerNr=@Model.PlayerNr'">
                                 </td>
                             }
                             else
                             {
                                 RenderCell(x,y);
-                                @*if (CorrectCheckerColor(gameBoard[x][y], nextMoveByBlack))
-                                {
-                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
-                                        onclick="window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@x&y=@y'">
-                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
-                                        {
-                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
-                                        }
-                                    </td>
-                                }
-                                else
-                                {
-                                    /* Display all the non-clickable cells */
-                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])">
-                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
-                                        {
-                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
-                                        }
-                                    </td>
-                                }*@
                             }
                         }
                         else
                         {
                             if (Model.CheckerCanEatAgain)
                             {
-                                if (Model.Logs!.Last().MovementToX == x && Model.Logs!.Last().MovementToY == y)
+                                if (IsPlayerMove() && Model.Logs!.Last().MovementToX == x && Model.Logs!.Last().MovementToY == y)
                                 {
                                     <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
                                         onclick="window.location = 
-                                        '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@Model.Logs!.Last().MovementToX&y=@Model.Logs!.Last().MovementToY'">
+                                        '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@Model.Logs!.Last().MovementToX&y=@Model.Logs!.Last().MovementToY&playerNr=@Model.PlayerNr'">
                                         @if (BoardPieceIsChecker(gameBoard[x][y]))
                                         {
                                             <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
@@ -124,27 +99,6 @@ else
                             else
                             {
                                 RenderCell(x, y);
-                                @*if (CorrectCheckerColor(gameBoard[x][y], nextMoveByBlack))
-                                {
-
-                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
-                                        onclick="window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@x&y=@y'">
-                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
-                                        {
-                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
-                                        }
-                                    </td>
-
-                                }
-                                else
-                                {
-                                    <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])">
-                                        @if (BoardPieceIsChecker(gameBoard[x][y]))
-                                        {
-                                            <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>
-                                        }
-                                    </td>
-                                }*@
                             }
                         }
                     }
@@ -179,9 +133,51 @@ else
 </body>
 </html>
 
+@section Scripts
+{
+    @if (!Model.Brain.GameOver() && BothPlayersAreAi())
+    {
+        <script>
+            setTimeout(() => {
+                window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&playerNr=0&aiMoves=true';
+            }, 2000);
+            setTimeout(() => {
+                window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&playerNr=1&aiMoves=true';
+            }, 2000);
+        </script>
+    }
+    @if (!Model.Brain.GameOver() && !IsPlayerMove())
+    {
+        bool aiMove = IsAiPlaying(); 
+        <script>
+            setTimeout(() => {
+                window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&playerNr=@Model.PlayerNr&aiMoves=@aiMove';
+            }, 1000);
+        </script>
+    }
+}
+
 @functions
 {
-    private string GetBoardCellClass(EBoardPiece boardPiece)
+    string GetPlayerName() => Model.PlayerNr == 0 ? Model.Game.Player1Name : Model.Game.Player2Name;
+
+    bool IsPlayerMove()
+    {
+        if ((Model.Brain.NextMoveByBlack() && Model.PlayerNr == 1) 
+            || (!Model.Brain.NextMoveByBlack() && Model.PlayerNr == 0))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    bool BothPlayersAreAi() => Model.Game.Player1Type == EPlayerType.Ai && Model.Game.Player2Type == EPlayerType.Ai;
+
+    string GetPlayerMoveStatus() => IsPlayerMove() ?  "Make a move!" : "Wait for opponent's move!";
+
+    bool IsAiPlaying() => Model.Game.Player1Type == EPlayerType.Ai || Model.Game.Player2Type == EPlayerType.Ai;
+    
+    string GetBoardCellClass(EBoardPiece boardPiece)
     {
         var blackSquares = new List<EBoardPiece>()
         {
@@ -194,7 +190,7 @@ else
         return blackSquares.Contains(boardPiece) ? "game-table-cell-black" : "game-table-cell-white";
     }
 
-    private string GetCheckerClass(EBoardPiece? boardPiece)
+    string GetCheckerClass(EBoardPiece? boardPiece)
     {
         return boardPiece switch
         {
@@ -205,7 +201,7 @@ else
             };
     }
 
-    private bool BoardPieceIsChecker(EBoardPiece? boardPiece)
+    bool BoardPieceIsChecker(EBoardPiece? boardPiece)
     {
         return boardPiece 
                 is EBoardPiece.BlackSquareBlackChecker 
@@ -214,12 +210,11 @@ else
                 or EBoardPiece.BlackSquareWhiteKing;
     }
 
-    private bool MoveIsPossible(int x, int y, PossibleMoves possibleMoves)
-    {
-        return possibleMoves.AllPossibleMoves.Any(coordinate => coordinate.X == x && coordinate.Y == y);
-    }
+    bool MoveIsPossible(int x, int y, PossibleMoves possibleMoves) 
+        => possibleMoves.AllPossibleMoves.Any(coordinate => coordinate.X == x && coordinate.Y == y);
+    
 
-    private bool CorrectCheckerColor(EBoardPiece boardPiece, bool nextMoveByBlack)
+    bool CorrectCheckerColor(EBoardPiece boardPiece, bool nextMoveByBlack)
     {
         if (nextMoveByBlack && 
             boardPiece is EBoardPiece.BlackSquareBlackChecker 
@@ -230,7 +225,7 @@ else
                    or EBoardPiece.BlackSquareWhiteKing;
     }
     
-    private static List<string> GetCharList()
+    List<string> GetCharList()
     {
         var charList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToList();
         var res = charList.Select(ch => ch.ToString()).ToList();
@@ -241,15 +236,15 @@ else
         return res;
     }
 
-    private void RenderCell(int x, int y)
+    void RenderCell(int x, int y)
     {
         var gameBoard = Model.Brain.GetBoard();
         var nextMoveByBlack = Model.Brain.NextMoveByBlack();
         
-        if (CorrectCheckerColor(gameBoard[x][y], nextMoveByBlack))
+        if (IsPlayerMove() && CorrectCheckerColor(gameBoard[x][y], nextMoveByBlack))
         {
             <td class="game-table-cell @GetBoardCellClass(gameBoard[x][y])"
-                onclick="window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@x&y=@y'">
+                onclick="window.location = '/CheckersGames/PlayGame?id=@Model.Game.Id&x=@x&y=@y&playerNr=@Model.PlayerNr'">
                 @if (BoardPieceIsChecker(gameBoard[x][y]))
                 {
                     <div class="checker @GetCheckerClass(gameBoard[x][y])"></div>

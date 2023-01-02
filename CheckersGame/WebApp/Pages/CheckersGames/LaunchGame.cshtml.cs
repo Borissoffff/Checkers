@@ -9,6 +9,8 @@ namespace WebApp.Pages.CheckersGames;
 public class LaunchGame : PageModel
 {
     private readonly IGamesRepository _gamesRepo;
+    
+    public CheckersGame Game { get; set; }
 
     public LaunchGame(AppDbContext context, IGamesRepository gamesRepo)
     {
@@ -23,10 +25,12 @@ public class LaunchGame : PageModel
 
         if (game == null) return RedirectToPage("/Index", new { error = "No such game" });
 
+        Game = game;
+
         if (game.Player1Type == EPlayerType.Human && game.Player2Type == EPlayerType.Human)
         {
             return Page();
         }
-        return RedirectToPage("PlayGame", new { id = game.Id, playerNo = '1'});
+        return RedirectToPage("PlayGame", new { id = game.Id, playerNr = '0'});
     }
 }

@@ -1,4 +1,4 @@
-﻿using ConsoleAppCheckersGame;
+﻿using System.Security;
 using ConsoleUI;
 using DAL;
 using DAL.DB;
@@ -6,41 +6,13 @@ using DAL.FileSystem;
 using GameBrain;
 using MenuSystem;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ProjectDomain;
 using static System.Console;
 
 //dotnet ef database update --project DAL.DB --startup-project ConsoleAppCheckersGame
 
-/*for (int i = 5 - 1; i > 2; i--)
-{
-    WriteLine(i);
-}*/
-
-List<T> ConcatListOfLists<T>(List<T> list) where T : class
-{
-    var result = new List<T>();
-    foreach (var l in list)
-    {
-        foreach (var el in (IEnumerable<T>)l)
-        {
-            result.Add(el);
-        }
-    }
-    return result;
-}
-
-var list = new List<List<int>>()
-{
-    new List<int>() { 1, 2, 3 },
-    new List<int>() { 1, 2, 3 },
-    new List<int>() { 1, 2, 3 },
-};
-
-var res = ConcatListOfLists(list);
-res.ForEach(p => WriteLine(p));
-
-
-var databaseEngine = "File System";
+string databaseEngine = "SQlite";
 
 var dbOptions =
     new DbContextOptionsBuilder<AppDbContext>()
@@ -55,12 +27,14 @@ IGameOptionsRepository optionsRepoFs = new GameOptionsRepositoryFileSystem();
 IGamesRepository gamesRepoFs = new GamesRepositoryFileSystem();
 
 //initialize two fundamental checkers settings and add them to FileSystem and SQLite
-var angloAmericanCheckersVersion = new CheckersOption
+CheckersOption angloAmericanCheckersVersion = new CheckersOption
 {
-    Name = "The Anglo-American version"
+    Name = "The Anglo-American version",
+    /*Height = 8,
+    Width = 12*/
 };
 
-var continentalVersion = new CheckersOption
+CheckersOption continentalVersion = new CheckersOption
 {
     Name = "Continental Version",
     Height = 10,
@@ -74,24 +48,20 @@ optionsRepoDb.SaveGameOptions(angloAmericanCheckersVersion.Name, angloAmericanCh
 optionsRepoDb.SaveGameOptions(continentalVersion.Name, continentalVersion);
 
 //Anglo-American version is default version
-var currentGameOptions = angloAmericanCheckersVersion;
+CheckersOption currentGameOptions = angloAmericanCheckersVersion;
 
-var optionsRepo = optionsRepoFs;
-var gamesRepo = gamesRepoDb;
+IGameOptionsRepository optionsRepo = optionsRepoDb;
+IGamesRepository gamesRepo = gamesRepoDb;
 
-/*var game = gamesRepo.GetGame(11);
-var Brain = new CheckersBrain(game!.CheckersOption!, game.CheckersGameStates!.LastOrDefault());;
-Ui.DrawGameBoard(Brain.GetBoard());*/
-
-/*RunMainMenu();
+RunMainMenu();
 WriteLine();
 WriteLine("Press any key to exit ...");
-ReadKey(true);*/
+ReadKey(true);
 
 void RunMainMenu()
 {
     string title = "Main Menu";
-    string[] options = { "New Game", "Load Game", "Options", "Data Management Method Swap", "Exit" };
+    string[] options = { "New Game", "Load Game", "Delete Game", "Options", "Data Management Method Swap", "Exit" };
     Menu mainMenu = new Menu(title, options);
     int selectedIndex = mainMenu.Run();
 
@@ -104,12 +74,15 @@ void RunMainMenu()
             LoadGame();
             break;
         case 2:
-            DisplayOptionsMenu();
+            DeleteGame();
             break;
         case 3:
-            SwapDataMethod();
+            DisplayOptionsMenu();
             break;
         case 4:
+            SwapDataMethod();
+            break;
+        case 5:
             Exit();
             break;
     }
@@ -177,11 +150,8 @@ void DeleteOptions()
         optionsRepo.DeleteGameOptions(l2[selectedIndex]);
         currentGameOptions = angloAmericanCheckersVersion;
     }
-    else
-    {
-        optionsRepo.DeleteGameOptions(optionsToDelete);
-    }
-
+    else optionsRepo.DeleteGameOptions(optionsToDelete);
+    
     var message = $"Done!\n Settings with the name -> {optionsToDelete} were deleted";
     LeaveSubSettingsMenu(message);
 }
@@ -194,7 +164,6 @@ void CreateOption()
     
     var name = CorrectStringInput(
         "Please write the name of the settings ",
-        "Options name cannot be empty",
         forOptionsDb:true,
         forGamesDb:false
         );
@@ -271,12 +240,9 @@ void CreateNewGame()
     
     var gameName = CorrectStringInput(
         "Please enter the name of your game",
-        "Game name cannot be empty",
         forOptionsDb:false,
-        forGamesDb:true
-        );
+        forGamesDb:true);
     
-    var game = new CheckersBrain(currentGameOptions, state:null);
     var lastGameId = gamesRepo.GetLastGameId();
 
     var checkersGame = new CheckersGame
@@ -286,8 +252,17 @@ void CreateNewGame()
         Player2Name = "Igor",
         CheckersOption = currentGameOptions,
     };
-    if (databaseEngine.Equals("File System")) checkersGame.Id = gamesRepo.GetLastGameId() + 1;
-        
+
+    if (databaseEngine.Equals("File System"))
+    {
+        checkersGame.Id = gamesRepo.GetLastGameId() + 1;
+    }
+
+    gamesRepo.SaveGame(checkersGame, (lastGameId + 1).ToString());
+
+
+    var gameBrain = new CheckersBrain(currentGameOptions, null);
+
     string[] options = { "Make move", "Save the Game" };
     var menu = new Menu("", options);
     menu.ClearCheckersTitle();
@@ -297,37 +272,38 @@ void CreateNewGame()
     {
         case 0:
             WriteLine("move");
+            GamePlay(game: checkersGame, brain: gameBrain);
             break;
         case 1:
-            gamesRepo.SaveGame(checkersGame, (lastGameId + 1).ToString());
             LeaveSubSettingsMenu($"Done!\nGame {gameName} was successfully saved");
             break;
     }
-    void DrawBoard() => Ui.DrawGameBoard(game.GetBoard());
+    
+    void DrawBoard() => Ui.DrawGameBoard(gameBrain.GetBoard());
 }
 
 void LoadGame()
 {
     Clear();
-    var l = new List<string>();
     var games = gamesRepo.GetGamesList();
-    
-    foreach (var game in games)
-    {
-        l.Add(game.Name + "\n");
-    }
 
-    var res = l.ToArray();
+    var res = games.Select(game => game.Name + "\n").ToArray();
+    
     var menu = new Menu("Load Game", res);
     menu.ClearCheckersTitle();
     var selectedIndex = menu.Run();
 
     var chosenGame = games[selectedIndex];
 
-    var checkersGame = gamesRepo.GetGame(chosenGame.Id);
+    var game = gamesRepo.GetGame(chosenGame.Id);
+
+    var lastState = game!.CheckersGameStates!.Last();
+
+    var brain = new CheckersBrain(game.CheckersOption!, lastState);
     
-    LeaveSubGameMenu($"Done\nGame with name {checkersGame.Name} is loaded!");
+    GamePlay(game, brain);
     
+    //RunLogicForMove(game, brain);
 }
 
 void WriteCurrentOptions()
@@ -389,6 +365,37 @@ void LeaveSubGameMenu(string title, Action? action=null)
     }
 }
 
+void DeleteGame()
+{
+    Clear();
+    var games = gamesRepo.GetGamesList();
+    
+    var res = games.Select(game => game.Name + "\n").ToArray();
+    
+    var menu = new Menu("Load Game", res);
+    menu.ClearCheckersTitle();
+    var selectedIndex = menu.Run();
+
+    var chosenGame = games[selectedIndex];
+    
+    gamesRepo.DeleteGame(chosenGame.Id);
+    
+    string[] quitOptions = {"Go to Main Menu", "Exit" };
+    var quitMenu = new Menu($"Game {chosenGame.Name} was successfully deleted!", quitOptions);
+    quitMenu.ClearCheckersTitle();
+    var index = quitMenu.Run();
+    switch (index)
+    {
+        case 0:
+            RunMainMenu();
+            break;
+        case 1:
+            Exit();
+            break;
+    }
+    
+}
+
 void SwapDataMethod()
 {
     string[] options = { "Use File System", "Use SQLite" };
@@ -428,31 +435,20 @@ int CorrectBoardSize()
         {
             boardSize = int.Parse(size);
         }
-        catch (Exception)
-        { /*ignore*/ }
+        catch (Exception) { WriteErrorMessage("Input must be numeric"); }
 
-        if (boardSize % 2 != 0)
-        {
-            ForegroundColor = ConsoleColor.Red;
-            WriteLine("Please enter even number");
-            ResetColor();
-        }
-        else if (boardSize < 8)
-        {
-            ForegroundColor = ConsoleColor.Red;
-            WriteLine("Board size cannot be less than 8");
-            ResetColor();
-        }
-        else
-        {
-            boardSizeIsCorrect = true;
-        }
+        if (boardSize % 2 != 0) WriteErrorMessage("Please enter even number");
+      
+        else if (boardSize < 8) WriteErrorMessage("Board size cannot be less than 8");
+
+        else boardSizeIsCorrect = true;
+        
     } while (!boardSizeIsCorrect);
 
     return boardSize;
 }
 
-string CorrectStringInput(string message, string errorMessage, bool forOptionsDb=false, bool forGamesDb=false)
+string CorrectStringInput(string message, bool forOptionsDb=false, bool forGamesDb=false)
 {
     string? name = null;
     do
@@ -461,38 +457,20 @@ string CorrectStringInput(string message, string errorMessage, bool forOptionsDb
         WriteLine();
         var input = ReadLine();
         
-        if (input == "")
-        {
-            ForegroundColor = ConsoleColor.Red;
-            WriteLine(errorMessage);
-            ResetColor();
-        }
+        if (input == "") WriteErrorMessage("Input cannot be empty");
 
         if (forOptionsDb)
         {
-            if (input != null && !SettingsAlreadyInDb(input))
-            {
-                name = input;
-            }
-            else
-            {
-                ForegroundColor = ConsoleColor.Red;
-                WriteLine($"Options with the name -> {input} already exists");
-                ResetColor();
-            }
+            if (input != null && !SettingsAlreadyInDb(input)) name = input;
+            
+            else WriteErrorMessage($"Options with the name -> {input} already exists");
+           
         }
         else if (forGamesDb)
         {
-            if (input != null && !GameAlreadyInDb(input))
-            {
-                name = input;
-            }
-            else
-            {
-                ForegroundColor = ConsoleColor.Red;
-                WriteLine($"Game with the name -> {input} already exists");
-                ResetColor();
-            }
+            if (input != null && !GameAlreadyInDb(input)) name = input;
+            
+            else WriteErrorMessage($"Game with the name -> {input} already exists");
         }
     } while (name == null);
 
@@ -507,22 +485,15 @@ string WhoStartsGame()
         WriteLine("Do you want white checkers make first move (y/n)");
         WriteLine();
         var choice = ReadLine();
-        if (choice == "")
-        {
-            ForegroundColor = ConsoleColor.Red;
-            WriteLine("Please type y or n");
-            ResetColor();
-        }
-        else if (choice != null && (choice.ToLower().Equals("y") || choice.ToLower().Equals("n")))
-        {
-            whiteStarts = choice;
-        }
-        else
-        {
-            ForegroundColor = ConsoleColor.Red;
-            WriteLine("Please type y or n");
-            ResetColor();
-        }
+        if (choice == "") WriteErrorMessage("Please type y or n");
+      
+        else if (choice != null &&
+                 (choice.ToLower().Equals("y") ||
+                  choice.ToLower().Equals("n"))
+                 ) whiteStarts = choice;
+        
+        else WriteErrorMessage("Please type y or n");
+        
     } while (whiteStarts == "");
 
     return whiteStarts;
@@ -539,8 +510,187 @@ bool GameAlreadyInDb(string gameName)
     {
         return gamesRepo.GetGamesList().Any(game => game.Equals(gameName));
     }
-    catch (Exception)
+    catch (Exception) { return false; }
+}
+
+void GamePlay(CheckersGame game, CheckersBrain brain)
+{
+    string[] options = { "Make a move", "Go to Main Menu (Game saved automatically)", "Exit (Game saved automatically)" };
+    var menu = new Menu($"{WhoMoves(brain, game)} moves\n", options);
+    menu.ClearCheckersTitle();
+    var selectedIndex = menu.Run(DrawBoard);
+
+    switch (selectedIndex)
     {
-        return false;
+        case 0:
+            RunLogicForMove(game, brain);
+            break;
+        case 1:
+           // gamesRepo.SaveGame(game, (gamesRepo.GetLastGameId() + 1).ToString());
+            RunMainMenu();
+            break;
+        case 2:
+           // gamesRepo.SaveGame(game, (gamesRepo.GetLastGameId() + 1).ToString());
+            Exit();
+            break;
     }
+    void DrawBoard() => Ui.DrawGameBoard(brain.GetBoard());
+}
+
+void RunLogicForMove(CheckersGame game, CheckersBrain brain)
+{
+    while (!brain.GameOver())
+    {
+        Ui.DrawGameBoard(brain.GetBoard());
+        
+        var coordFrom = GetCheckerThatUserWantsToMove(brain, brain.CheckersUserCanPick());
+
+        WriteLine($"you selected position {coordFrom.X} {coordFrom.Y}");
+
+        var piece = brain.GetBoard()[coordFrom.X][coordFrom.Y];
+
+        PossibleMoves? possibleMoves;
+
+        if (brain.NextMoveByBlack())
+        {
+            possibleMoves = piece 
+                is EBoardPiece.BlackSquareBlackKing 
+                or EBoardPiece.BlackSquareWhiteKing 
+                ? brain.FindPossibleMovesForKing(coordFrom.X, coordFrom.Y) 
+                : brain.FindPossibleMovesForBlack(coordFrom.X, coordFrom.Y);
+        }
+        else
+        {
+            possibleMoves = piece 
+                is EBoardPiece.BlackSquareBlackKing 
+                or EBoardPiece.BlackSquareWhiteKing 
+                ? brain.FindPossibleMovesForKing(coordFrom.X, coordFrom.Y) 
+                : brain.FindPossibleMovesForWhite(coordFrom.X, coordFrom.Y);
+        }
+
+        var possibleMovesAsString = "";
+        possibleMoves.AllPossibleMoves.ForEach(move => possibleMovesAsString += move.ToString());
+    
+        Ui.DrawGameBoard(brain.GetBoard(), possibleMoves);
+        WriteLine();
+        WriteLine($"Possible moves for {coordFrom} are {possibleMovesAsString}");
+
+        Coordinate coordTo = GetCheckerThatUserWantsToMove(brain, possibleMoves.AllPossibleMoves);
+
+        var log = brain.MakeMove(coordTo.X, coordTo.Y, coordFrom.X, coordFrom.Y);
+
+        if (game.CheckersGameStates == null)
+        {
+            game.CheckersGameStates = new List<CheckersGameState>();
+        }
+
+        game.CheckersGameStates!.Add(new CheckersGameState()
+        {
+            SerializedGameState = brain.GetSerializedGameState()
+        });
+                
+        if (game.MovementLogs == null) game.MovementLogs = new List<MovementLog>();
+        
+        game.MovementLogs!.Add(log);
+
+        gamesRepo.SaveChanges();
+        
+        GamePlay(game, brain);
+    }
+}
+
+Coordinate GetCheckerThatUserWantsToMove(CheckersBrain brain, List<Coordinate> possibleMoves)
+{
+    var cols = brain.GetBoard().GetLength(0);
+    var rows = brain.GetBoard()[0].GetLength(0);
+    
+    var chars = GetBoardLetters(cols);
+    var numberList = GetBoardNumbers(rows);
+
+    var availableCheckersAsStringList = new List<string>();
+    possibleMoves.ForEach(
+        checker => availableCheckersAsStringList.Add($"{chars[checker.X]} {rows - checker.Y}"));
+    var availableCheckersAsString = string.Join(", ", availableCheckersAsStringList);
+
+    Coordinate? coordinate = null;
+    string? letter = null;
+    int number = -1;
+    
+    do
+    {
+        WriteLine("\nSelect checker you want to move.\n " +
+                  "It must look like '{Letter} {Number}'." +
+                  "\n For example A 3 or C 7\n" +
+                  $"Available options are {availableCheckersAsString}");
+        WriteLine();
+        
+        var input = ReadLine();
+        
+        if (string.IsNullOrEmpty(input)) WriteErrorMessage("Input cannot be empty");
+        
+        else if (input.Contains(' '))
+        {
+            var elements = input.Split(' ');
+            
+            var colLetter = elements[0];
+            var rowNumberAsString = elements[1];
+            
+            try
+            {
+                var num = int.Parse(rowNumberAsString);
+
+                if (numberList.Contains(num) && chars.Contains(colLetter))
+                {
+                    number = rows - num;
+                    letter = colLetter;
+                }
+                else WriteErrorMessage("Wrong input");
+            }
+            catch (Exception) { WriteErrorMessage("Wrong input format"); }
+        }
+        else WriteErrorMessage("Wrong input format");
+
+        if (letter.IsNullOrEmpty() || number <= -1) continue;
+        
+        var coord = new Coordinate(
+            chars.IndexOf(letter!),
+            number);
+        
+       // if (possibleMoves.Contains(coord)) coordinate = coord;
+       if (possibleMoves.Any(c => c.X == coord.X && c.Y == coord.Y)) coordinate = coord;
+       else WriteErrorMessage("You cannot pick that checker");
+
+    } while (coordinate == null);
+
+    return coordinate;
+}
+
+string WhoMoves(CheckersBrain brain, CheckersGame game)
+    => brain.NextMoveByBlack() ? game.Player2Name : game.Player1Name;
+
+
+void WriteErrorMessage(string message)
+{
+    ForegroundColor = ConsoleColor.Red;
+    WriteLine(message);
+    ResetColor(); 
+}
+
+List<string> GetBoardLetters(int cols)
+{
+    var charList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToList().ToList();
+    var res = charList.Select(ch => ch.ToString()).ToList();
+
+    foreach (var ch in charList)
+    {
+        res.AddRange(charList.Where(ch2 => !ch.Equals(ch2)).Select(ch2 => $"{ch}{ch2}"));
+    }
+    return res.Take(cols).ToList();
+}
+
+List<int> GetBoardNumbers(int rows)
+{
+    var numberList = Enumerable.Range(1, rows).Select(c => c).ToList();
+    numberList.Reverse();
+    return numberList;
 }
